@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morphing Crossover Filter</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 24px;
+            color: #f0f0f0;
+        }
+
+        .description {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #b0b0b0;
+            font-size: 14px;
+        }
+
+        .scope-container {
+            background-color: #0a0a0a;
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid #333;
+            position: relative;
+        }
+.capture-button {
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    background: transparent;
+    border: none;
+    color: #888;
+    font-size: 11px;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 4px 8px;
+    transition: color 0.2s;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    z-index: 10;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.capture-button:hover {
+    color: #bbb;
+}
+        #scope {
+            display: block;
+            width: 100%;
+            height: 400px;
+            border-radius: 4px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+        }
+        
+        .slider-container {
+            position: relative;
+            width: 140px;
+            height: 24px;
+        }
+        
+        .slider-track {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #444;
+            border-radius: 2px;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        .toggle-button {
+            background-color: #333;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 12px 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .toggle-button:hover {
+            background-color: #444;
+            border-color: #666;
+        }
+
+        .toggle-button:active {
+            background-color: #222;
+        }
+
+        label {
+            font-size: 12px;
+            color: #b0b0b0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="range"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            outline: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            margin: 0;
+            cursor: pointer;
+            z-index: 2;
+        }
+        
+        /* Hide default tracks since we're using our own div */
+        input[type="range"]::-webkit-slider-track {
+            background: transparent;
+            border: none;
+        }
+        
+        input[type="range"]::-moz-range-track {
+            background: transparent;
+            border: none;
+        }
+        
+        /* Webkit thumb */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            background: #4CAF50;
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 3;
+        }
+
+        /* Firefox thumb */
+        input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            background: #4CAF50;
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            -moz-appearance: none;
+            position: relative;
+            z-index: 3;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: space-between;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+        
+        .legend-items {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 3px;
+            border-radius: 1px;
+        }
+
+        .value-display {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #4CAF50;
+            margin-top: 4px;
+        }
+
+        .mode-button {
+            background-color: #333;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            position: absolute;
+            left: 20px;
+        }
+
+        .mode-button:hover {
+            background-color: #444;
+            border-color: #666;
+        }
+
+        .mode-button:active {
+            background-color: #222;
+        }
+
+        .track-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-right: 20px;
+        }
+        
+        .track-control label {
+            font-size: 12px;
+            color: #b0b0b0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .track-switch {
+            position: relative;
+            width: 20px;
+            height: 12px;
+            background: #757575;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .track-switch-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 8px;
+            height: 8px;
+            background: #4CAF50;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .track-switch.active .track-switch-slider {
+            transform: translateX(8px);
+        }
+
+        .info {
+            background-color: #1a1a1a;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #a0a0a0;
+            position: relative;
+            min-height: 100px;
+        }
+        
+        .info-nav {
+            position: absolute;
+            bottom: 10px;
+            cursor: pointer;
+            color: #666;
+            font-size: 20px;
+            user-select: none;
+            transition: color 0.2s;
+            padding: 10px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .info-nav:hover {
+            color: #999;
+        }
+        
+        .info-nav.prev {
+            left: 15px;
+        }
+        
+        .info-nav.next {
+            right: 15px;
+        }
+        
+        .info-content {
+            margin-bottom: 25px;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 20px;
+                max-width: 100%;
+            }
+            
+            .controls {
+                gap: 20px;
+            }
+            
+            input[type="range"] {
+                width: 120px;
+            }
+            
+            .legend {
+                gap: 15px;
+                font-size: 11px;
+            }
+            
+            .legend-color {
+                width: 16px;
+                height: 3px;
+            }
+            
+            #scope {
+                height: 300px;
+            }
+            
+            .toggle-button {
+                padding: 10px 16px;
+                font-size: 11px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .controls {
+                gap: 15px;
+            }
+            
+            input[type="range"] {
+                width: 100px;
+            }
+            
+            .control-group {
+                gap: 6px;
+            }
+            
+            label {
+                font-size: 11px;
+            }
+            
+            .value-display {
+                font-size: 11px;
+            }
+            
+            #scope {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>M X O</h1>
+        
+        <div class="scope-container">
+    <button class="capture-button" id="captureButton">Capture</button>
+    <canvas id="scope"></canvas>
+        </div>
+        
+        <div class="legend" id="legend">
+            <button class="mode-button" id="modeButton">Mode</button>
+            <div class="legend-items">
+                <div class="legend-item crossover-mode">
+                    <div class="legend-color" style="background-color: #00ffff;"></div>
+                    <span>Lows</span>
+                </div>
+                <div class="legend-item crossover-mode">
+                    <div class="legend-color" style="background-color: #00ff00;"></div>
+                    <span>Mids</span>
+                </div>
+                <div class="legend-item crossover-mode">
+                    <div class="legend-color" style="background-color: #ff00ff;"></div>
+                    <span>Highs</span>
+                </div>
+                <div class="legend-item bandpass-mode" style="display: none;">
+                    <div class="legend-color" style="background-color: #00ffff;"></div>
+                    <span>BP1</span>
+                </div>
+                <div class="legend-item bandpass-mode" style="display: none;">
+                    <div class="legend-color" style="background-color: #ff00ff;"></div>
+                    <span>BP2</span>
+                </div>
+                <div class="legend-item phaser-mode" style="display: none;">
+                    <div class="legend-color" style="background-color: #00ffff;"></div>
+                    <span>Phaser 1</span>
+                </div>
+                <div class="legend-item phaser-mode" style="display: none;">
+                    <div class="legend-color" style="background-color: #ff00ff;"></div>
+                    <span>Phaser 2</span>
+                </div>
+                <div class="legend-item morph-mode" style="display: none;">
+                    <div class="legend-color" style="background-color: #00ffff;"></div>
+                    <span>Morph</span>
+                </div>
+            </div>
+            <div class="track-control">
+                <label>Track</label>
+                <div class="track-switch" id="trackSwitch">
+                    <div class="track-switch-slider"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Frequency</label>
+                <div class="slider-container">
+                    <div class="slider-track"></div>
+                    <input type="range" id="param1" min="0" max="100" step="1" value="50">
+                </div>
+                <div class="value-display" id="param1Display">632 Hz</div>
+            </div>
+            <div class="control-group">
+                <label>Spread</label>
+                <div class="slider-container">
+                    <div class="slider-track"></div>
+                    <input type="range" id="param2" min="0" max="50" step="0.5" value="0">
+                </div>
+                <div class="value-display" id="param2Display">0</div>
+            </div>
+            <div class="control-group">
+                <label>Resonance</label>
+                <div class="slider-container">
+                    <div class="slider-track"></div>
+                    <input type="range" id="param3" min="0" max="100" step="1" value="0">
+                </div>
+                <div class="value-display" id="param3Display">0</div>
+            </div>
+            <div class="control-group">
+                <label>Tilt</label>
+                <div class="slider-container">
+                    <div class="slider-track"></div>
+                    <input type="range" id="param4" min="-50" max="50" step="1" value="0">
+                </div>
+                <div class="value-display" id="param4Display">0</div>
+            </div>
+            <div class="control-group">
+                <label>Damp</label>
+                <div class="slider-container">
+                    <div class="slider-track"></div>
+                    <input type="range" id="param5" min="0" max="100" step="1" value="100">
+                </div>
+                <div class="value-display" id="param5Display">30.0 kHz</div>
+            </div>
+            <div class="control-group" id="morphControl" style="display: none;">
+                <label>Morph</label>
+                <div class="slider-container">
+                    <div class="slider-track"></div>
+                    <input type="range" id="param6" min="0" max="100" step="1" value="0">
+                </div>
+                <div class="value-display" id="param6Display">0</div>
+            </div>
+        </div>
+        
+        <div class="info">
+            <div class="info-content" id="infoContent">
+                <!-- Info text will be inserted here -->
+            </div>
+            <span class="info-nav prev" id="infoPrev" style="display: none;">&lt;&lt; prev</span>
+            <span class="info-nav next" id="infoNext" style="display: none;">next &gt;&gt;</span>
+        </div>
+    </div>
+
+    <script>
+        // Get canvas and context
+        let canvas = document.getElementById('scope');
+        let ctx = canvas.getContext('2d');
+        
+        // Scope dimensions
+        let margin = 50;
+        
+        // Module parameters
+        let baseFreq = 632; // Hz (center frequency)
+        let spread = 0; // Hz spread between LP and HP
+        let resonance = 0; // Base resonance (0-100)
+        let tilt = 0; // Resonance tilt (-50 to +50)
+        let damp = 30000; // Damping filter frequency (Hz) - CHANGED: initialized at 30kHz
+        let morph = 0; // Morph parameter (0-100)
+        let trackMode = false; // Track switch state
+        let displayMode = 'crossover'; // 'crossover', 'bandpass', 'phaser', or 'morph'
+        
+       // Info text management
+let currentInfoIndex = 0;
+const infoTexts = {
+    crossover: [
+        "The Morphing Crossover Filter (MXO) is a network of high order analog filters that separates incoming audio into Low, Mid, and High frequency bands. The crossover points and resonances that define each frequency band are fully adjustable both manually and via control voltage.<br><br>Adjust the frequency slider and watch the cut off frequencies of all three frequency bands move in unison. Next adjust the spread control and watch the mid range expand as the low and high bands diverge across the frequency spectrum.<br>. ",
+        "Adjust the resonance slider to control the resonance of all four filters simultaneously. The resonance is continuously adjustable from a butterworth response to self oscillation. <br><br> Tilt is a resonance tilt control. Adjusting tilt to the right will increase the resonance for the high frequency band and the mid range band's low pass filter, while decreasing the resonance for the low frequency band and the mid range band's high pass filter. Adjusting tilt to the left will have the opposite effect: The resonance for the low frequency band will increase along with the mid range band's high pass filter, while the resonance for the high frequency band will decrease along with the mid range band's low pass filter.<br><br> Note that while the graph accurately represents MXO's resonance response, the exact nuances of the resonance's amplitude response may differ IRL.<br>. ",
+        "The high frequency band also features a non resonant two pole low pass filter, called the damp filter. The damp filter is especially useful when monitoring the morph output because it can prevent sudden harsh timbre transitions when crossfading into the high frequency band.<br><br> Adjust the frequency slider to its left most position. Now sweep the damp slider across its entire range. Note how the damp filter is independent from all other filters.<br><br> Leave the damp slider approximately at its halfway point. Toggle on the track switch. Now adjust the frequency and spread sliders and watch how the damp filter moves in unison with the high frequency band's high pass filter. The track switch is very useful because it allows the high frequency band to have a consistent bandwidth as you adjust its cut off frequency. When tracking is engaged, the cut off frequency of the damp filter cannot be lower than the cut off frequency of the high frequency band's six pole high pass filter.<br>. "
+    ],
+    bandpass: [
+        "MXO also offers two six pole band pass filters. BP1 is derived from the six pole state variable filter that establishes the low frequency band and BP2 is derived from the six pole state variable filter that establishes the high frequency band. <br><br> Adjust the frequency, spread, resonance, and tilt sliders and note how the bandpass filters respond similarly to the low and high frequency bands.<br><br> Mixing the two bandpass filters together and modulating spread is a quick and easy way to patch formant animation. <br> . "
+        
+        
+    ],
+    phaser: [
+        "MXO offers two phaser outputs which are affected by the morph control. Phaser 1 is derived from the 6 pole state variable filter that establishes the low frequency band and Phaser 2 is derived from the 6 pole state variable filter that establishes the high frequency band.<br><br> Adjust the frequency, spread, resonance, and tilt sliders and note how they respond similarly to the low and high frequency bands. <br> . ",
+        "The morph slider allows the phaser response to morph continuously from a bandpass phaser to a traditional six pole phaser. When the morph slider is centered, the phaser outputs provide six pole all pass filters, which have a flat frequency response but rotate the phase of the incoming audio by 1080 degrees. <br><br> While the graphs accurately represent the response of the phaser outputs, the nuances of their exact response may differ in real life. <br>."
+         
+    ],
+    morph: [
+        "The morph output allows the user to continuously crossfade between the three frequency bands.<br><br> When the morph slider is in its left most position, the morph output provides the low frequency band. When the morph slider is in its right most position, the morph output provides a mix of the low and high frequency bands, which results in a variable width band reject filter.<br><br> Center the frequency and spread sliders and then adjust the morph slider to crossfade between the different frequency bands. Note the unique frequency responses that can be found at the mid points between frequency bands. <br> . ",
+        
+        
+    ]
+};
+        
+        // Frequency points for logarithmic scale
+        const freqPoints = [
+            20, 30, 40, 50, 60, 70, 80, 90, 100,
+            200, 300, 400, 500, 600, 700, 800, 900, 1000,
+            2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000,
+            20000
+        ];
+        
+        // Labeled frequencies
+        const labeledFreqs = [20, 50, 100, 500, 1000, 5000, 10000, 15000, 20000];
+        
+        // Utility functions
+        // Set canvas size
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const rect = container.getBoundingClientRect();
+            const width = rect.width - 40; // Account for padding
+            const height = 400;
+            
+            canvas.width = width;
+            canvas.height = height;
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+        }
+        
+       // Function to update info text
+function updateInfoText() {
+    const infoContent = document.getElementById('infoContent');
+    const prevButton = document.getElementById('infoPrev');
+    const nextButton = document.getElementById('infoNext');
+    const currentModeTexts = infoTexts[displayMode];
+    
+    // Update the text content
+    infoContent.innerHTML = currentModeTexts[currentInfoIndex];
+    
+    // Show/hide navigation buttons based on current position
+    // Show prev button only if not on first page
+    if (currentInfoIndex > 0) {
+        prevButton.style.display = 'block';
+    } else {
+        prevButton.style.display = 'none';
+    }
+    
+    // Show next button only if not on last page
+    if (currentInfoIndex < currentModeTexts.length - 1) {
+        nextButton.style.display = 'block';
+    } else {
+        nextButton.style.display = 'none';
+    }
+}
+        
+        // Convert frequency to x-position on logarithmic scale
+        function freqToX(freq) {
+            const plotWidth = canvas.width - 2 * margin;
+            const logMin = Math.log10(20);
+            const logMax = Math.log10(20000);
+            const logFreq = Math.log10(freq);
+            const normalized = (logFreq - logMin) / (logMax - logMin);
+            return margin + normalized * plotWidth;
+        }
+        
+        // Convert dB to y-position (0dB at 4/10 from top)
+        function dbToY(db) {
+            const plotHeight = canvas.height - 2 * margin;
+            const zeroDbY = margin + plotHeight * 0.4; // 0dB at 4/10 position
+            const pixelsPerDb = plotHeight * 0.6 / 36; // 36dB range below 0dB
+            return zeroDbY - (db * pixelsPerDb);
+        }
+        
+        // Calculate 2-pole Butterworth lowpass response (for damping filter)
+        function butterworth2PoleLP(freq, cutoff) {
+            const ratio = freq / cutoff;
+            // 2-pole = 12dB/octave rolloff
+            const attenuation = 1 / Math.sqrt(1 + Math.pow(ratio, 4));
+            return 20 * Math.log10(attenuation);
+        }
+        
+        // Calculate filter response with resonance
+        function resonantButterworthLP(freq, cutoff, poleCount, Q) {
+            const w = freq / cutoff;
+            
+            // Basic Butterworth response
+            const butterworthMag = 1 / Math.sqrt(1 + Math.pow(w, 2 * poleCount));
+            
+            if (Q <= 0.707) {
+                // Pure Butterworth response
+                return 20 * Math.log10(butterworthMag);
+            }
+            
+            // Add resonance peak at cutoff frequency
+            const resonanceWidth = 0.5 / Q;
+            const distFromCutoff = Math.abs(Math.log10(w));
+            
+            // Gaussian-like resonance peak centered at cutoff (w=1)
+            const resonanceFactor = Math.exp(-Math.pow(distFromCutoff / resonanceWidth, 2));
+            
+            // Calculate peak height from Q
+            const peakHeight = 20 * Math.log10(Q / 0.707);
+            
+            // Apply resonance only near cutoff
+            const resonanceBoost = resonanceFactor * peakHeight;
+            
+            // Combine Butterworth response with resonance peak
+            return 20 * Math.log10(butterworthMag) + resonanceBoost;
+        }
+        
+        function resonantButterworthHP(freq, cutoff, poleCount, Q) {
+            const w = freq / cutoff;
+            
+            // Basic Butterworth highpass response
+            const butterworthMag = 1 / Math.sqrt(1 + Math.pow(cutoff / freq, 2 * poleCount));
+            
+            if (Q <= 0.707) {
+                // Pure Butterworth response
+                return 20 * Math.log10(butterworthMag);
+            }
+            
+            // Add resonance peak at cutoff frequency
+            const resonanceWidth = 0.5 / Q;
+            const distFromCutoff = Math.abs(Math.log10(w));
+            
+            // Gaussian-like resonance peak
+            const resonanceFactor = Math.exp(-Math.pow(distFromCutoff / resonanceWidth, 2));
+            
+            // Peak height from Q
+            const peakHeight = 20 * Math.log10(Q / 0.707);
+            
+            // Apply resonance only near cutoff
+            const resonanceBoost = resonanceFactor * peakHeight;
+            
+            // Combine Butterworth response with resonance peak
+            return 20 * Math.log10(butterworthMag) + resonanceBoost;
+        }
+        
+        // Calculate 6-pole bandpass response (SVF-style behavior)
+        function resonantBandpass6Pole(freq, centerFreq, Q) {
+            // In SVF, the bandpass is created from the state variable structure
+            // where HP and LP share the same frequency
+            // The -3dB bandwidth = centerFreq / Q
+            
+            // For 6-pole (3-pole HP + 3-pole LP), we need to adjust the response
+            // to match SVF characteristics
+            const w = freq / centerFreq;
+            
+            // 3-pole highpass at center frequency
+            const hpMag = 1 / Math.sqrt(1 + Math.pow(1/w, 6));
+            
+            // 3-pole lowpass at center frequency  
+            const lpMag = 1 / Math.sqrt(1 + Math.pow(w, 6));
+            
+            // Combined magnitude
+            const combinedMag = hpMag * lpMag;
+            
+            // In SVF, the BP has -3dB at center, so normalize to match
+            // At w=1, hpMag = lpMag = 1/sqrt(2), combined = 0.5
+            // We want this to be -3dB (0.707), so multiply by sqrt(2)
+            const svfNormalizedMag = combinedMag * 1.414;
+            
+            // Apply Q-dependent gain correction
+            // In SVF, bandwidth = f0/Q, and the shape changes with Q
+            let responseDb = 20 * Math.log10(svfNormalizedMag);
+            
+            // For proper SVF emulation, adjust the overall gain based on Q
+            // Lower Q should give wider, flatter response
+            if (Q < 0.707) {
+                // Widen the response for low Q
+                const broadening = 0.707 / Q;
+                const wAdjusted = Math.pow(w, 1/broadening);
+                const hpMagAdjusted = 1 / Math.sqrt(1 + Math.pow(1/wAdjusted, 6));
+                const lpMagAdjusted = 1 / Math.sqrt(1 + Math.pow(wAdjusted, 6));
+                const adjustedMag = hpMagAdjusted * lpMagAdjusted * 1.414;
+                responseDb = 20 * Math.log10(adjustedMag);
+            }
+            
+            // Add resonance peak at center frequency
+            if (Q > 0.707) {
+                const distFromCenter = Math.abs(Math.log10(w));
+                const resonanceWidth = 0.5 / Q;
+                const resonanceFactor = Math.exp(-Math.pow(distFromCenter / resonanceWidth, 2));
+                const peakHeight = 20 * Math.log10(Q / 0.707);
+                const resonanceBoost = resonanceFactor * peakHeight;
+                responseDb += resonanceBoost;
+            }
+            
+            return responseDb;
+        }
+        
+        // Calculate 6-pole phaser response with proper notches
+        function phaser6Pole(freq, centerFreq, Q, morphValue) {
+            // Morph between bandpass phaser (0) and standard phaser (100)
+            // At morph = 50, flat response (allpass)
+            
+            if (morphValue === 50) {
+                // Perfect allpass - flat response
+                return 0;
+            }
+            
+            let responseDb = 0;
+            
+            if (morphValue < 50) {
+                // Bandpass phaser (morph 0-49)
+                // 2-pole bandpass with 2 notches
+                const blendFactor = (50 - morphValue) / 50; // 1 at morph=0, 0 at morph=50
+                
+                // 2-pole bandpass response
+                const w = freq / centerFreq;
+                const bpMag = w / Math.sqrt(1 + Math.pow(w, 4)); // 2-pole bandpass
+                const bpDb = 20 * Math.log10(bpMag);
+                
+                // Add resonance to bandpass
+                if (Q > 0.707) {
+                    const distFromCenter = Math.abs(Math.log10(w));
+                    const resonanceWidth = 0.5 / Q;
+                    const resonanceFactor = Math.exp(-Math.pow(distFromCenter / resonanceWidth, 2));
+                    const peakHeight = 20 * Math.log10(Q / 0.707);
+                    responseDb = bpDb + resonanceFactor * peakHeight;
+                } else {
+                    responseDb = bpDb;
+                }
+                
+                // Add two notches for bandpass phaser
+                const notch1 = centerFreq * 0.85;
+                const notch2 = centerFreq * 1.6;
+                
+                // Use log10 to match display scale and relative width
+                const relativeWidth = 0.03; // Width as fraction of frequency
+                const dist1 = Math.abs(Math.log10(freq / notch1));
+                const dist2 = Math.abs(Math.log10(freq / notch2));
+                
+                // Deep notches using exponential law with consistent scaling
+                const notchDepth1 = 40 * Math.exp(-dist1 / relativeWidth);
+                const notchDepth2 = 40 * Math.exp(-dist2 / relativeWidth);
+                
+                responseDb -= notchDepth1 * blendFactor;
+                responseDb -= notchDepth2 * blendFactor;
+                
+                responseDb *= blendFactor;
+                
+            } else {
+                // Standard 6-pole phaser (morph 51-100)
+                // 3 notches, flat response otherwise
+                const blendFactor = (morphValue - 50) / 50; // 0 at morph=50, 1 at morph=100
+                
+                // Calculate notch frequencies
+                const notch1 = centerFreq * 0.5;
+                const notch2 = centerFreq * 1.41;
+                const notch3 = centerFreq * 4.0;
+                
+                // Use log10 to match display scale and relative width
+                const relativeWidth = 0.03; // Width as fraction of frequency
+                const dist1 = Math.abs(Math.log10(freq / notch1));
+                const dist2 = Math.abs(Math.log10(freq / notch2));
+                const dist3 = Math.abs(Math.log10(freq / notch3));
+                
+                // Very deep notches using exponential law with consistent scaling
+                const notchDepth1 = 40 * Math.exp(-dist1 / relativeWidth);
+                const notchDepth2 = 40 * Math.exp(-dist2 / relativeWidth);
+                const notchDepth3 = 40 * Math.exp(-dist3 / relativeWidth);
+                
+                responseDb -= notchDepth1 * blendFactor;
+                responseDb -= notchDepth2 * blendFactor;
+                responseDb -= notchDepth3 * blendFactor;
+                
+                // Add resonance peaks between notches
+                if (Q > 0.707) {
+                    const peak1 = centerFreq * 0.7;
+                    const peak2 = centerFreq * 2.0;
+                    
+                    const peakWidth = 0.5 / Q;
+                    const peakHeight = 20 * Math.log10(Q / 0.707) * 0.3 * blendFactor;
+                    
+                    const peakDist1 = Math.abs(Math.log10(freq / peak1));
+                    const peakDist2 = Math.abs(Math.log10(freq / peak2));
+                    
+                    if (peakDist1 < peakWidth * 2) {
+                        const peakFactor = Math.exp(-Math.pow(peakDist1 / peakWidth, 2));
+                        responseDb += peakHeight * peakFactor;
+                    }
+                    
+                    if (peakDist2 < peakWidth * 2) {
+                        const peakFactor = Math.exp(-Math.pow(peakDist2 / peakWidth, 2));
+                        responseDb += peakHeight * peakFactor;
+                    }
+                }
+            }
+            
+            // Limit display range but show notches extend beyond -36dB
+            return Math.max(responseDb, -50);
+        }
+        
+        // Function to update damp display based on track mode
+        function updateDampDisplay() {
+            let dampingCutoff;
+            
+            if (trackMode) {
+                // Track mode: add parameters then apply log conversion
+                const freqValue = parseFloat(document.getElementById('param1').value);
+                const spreadValue = parseFloat(document.getElementById('param2').value);
+                const dampValue = parseFloat(document.getElementById('param5').value);
+                
+                // Add all three parameter values
+                const totalParam = freqValue + spreadValue + dampValue;
+                
+                // Convert to frequency using same log law as individual parameters
+                const logMin = Math.log10(20);
+                const logMax = Math.log10(30000);
+                const logFreq = logMin + (totalParam / 100) * (logMax - logMin);
+                dampingCutoff = Math.pow(10, logFreq);
+              
+            } else {
+                // Normal mode: just the damp parameter
+                dampingCutoff = damp;
+            }
+            
+            // Cap at 30kHz and 20Hz
+            dampingCutoff = Math.min(dampingCutoff, 30000);
+            dampingCutoff = Math.max(dampingCutoff, 20);
+            
+            // Format frequency display
+            let freqDisplay;
+            if (dampingCutoff >= 1000) {
+                freqDisplay = (dampingCutoff / 1000).toFixed(1) + ' kHz';
+            } else {
+                freqDisplay = Math.round(dampingCutoff) + ' Hz';
+            }
+            document.getElementById('param5Display').textContent = freqDisplay;
+        }
+        
+        // Draw grid
+        function drawGrid() {
+            const plotWidth = canvas.width - 2 * margin;
+            const plotHeight = canvas.height - 2 * margin;
+            
+            // Draw frequency grid lines (vertical)
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            
+            freqPoints.forEach(freq => {
+                const x = freqToX(freq);
+                ctx.beginPath();
+                ctx.moveTo(x, margin);
+                ctx.lineTo(x, margin + plotHeight);
+                ctx.stroke();
+            });
+            
+            // Draw horizontal grid lines (6dB increments)
+            for (let db = -36; db <= 18; db += 6) {
+                const y = dbToY(db);
+                ctx.beginPath();
+                ctx.moveTo(margin, y);
+                ctx.lineTo(margin + plotWidth, y);
+                
+                // Make 0dB line slightly bolder
+                if (db === 0) {
+                    ctx.strokeStyle = '#555';
+                    ctx.lineWidth = 1;
+                } else {
+                    ctx.strokeStyle = '#333';
+                    ctx.lineWidth = 1;
+                }
+                ctx.stroke();
+            }
+            
+            // Draw axes border
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(margin, margin, plotWidth, plotHeight);
+            
+            // Draw frequency labels
+            ctx.fillStyle = '#888';
+            ctx.font = '11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            
+            labeledFreqs.forEach(freq => {
+                const x = freqToX(freq);
+                let label;
+                if (freq >= 1000) {
+                    label = (freq / 1000) + 'k';
+                } else {
+                    label = freq.toString();
+                }
+                ctx.fillText(label, x, margin + plotHeight + 5);
+            });
+            
+            // Draw amplitude labels
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            
+            // Only label the negative dB values and 0dB
+            for (let db = -36; db <= 0; db += 6) {
+                const y = dbToY(db);
+                ctx.fillText(db + 'dB', margin - 10, y);
+            }
+        }
+        
+        // Draw waveform
+        function drawWaveform(data, color, lineWidth = 2) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            ctx.beginPath();
+            
+            let isDrawing = false;
+            const yMin = margin;
+            const yMax = canvas.height - margin;
+            
+            for (let i = 0; i < data.length; i++) {
+                const x = data[i].x;
+                const y = data[i].y;
+                
+                // Check if point is within x bounds
+                if (x >= margin && x <= canvas.width - margin) {
+                    // Check if point is within y bounds
+                    if (y >= yMin && y <= yMax) {
+                        if (!isDrawing) {
+                            ctx.moveTo(x, y);
+                            isDrawing = true;
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    } else {
+                        // Point is outside y bounds - break the line
+                        if (isDrawing) {
+                            // Check if we need to draw to the edge
+                            if (i > 0) {
+                                const prevY = data[i-1].y;
+                                const prevX = data[i-1].x;
+                                
+                                // If previous point was inside, draw to edge
+                                if (prevY >= yMin && prevY <= yMax) {
+                                    // Interpolate to find edge intersection
+                                    const edgeY = y < yMin ? yMin : yMax;
+                                    const t = (edgeY - prevY) / (y - prevY);
+                                    const edgeX = prevX + t * (x - prevX);
+                                    ctx.lineTo(edgeX, edgeY);
+                                }
+                            }
+                            
+                            ctx.stroke();
+                            ctx.beginPath();
+                            isDrawing = false;
+                        }
+                        
+                        // Check if next point will be inside
+                        if (i < data.length - 1) {
+                            const nextY = data[i+1].y;
+                            const nextX = data[i+1].x;
+                            
+                            if (nextY >= yMin && nextY <= yMax) {
+                                // Interpolate from edge
+                                const edgeY = y < yMin ? yMin : yMax;
+                                const t = (edgeY - y) / (nextY - y);
+                                const edgeX = x + t * (nextX - x);
+                                ctx.moveTo(edgeX, edgeY);
+                                isDrawing = true;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (isDrawing) {
+                ctx.stroke();
+            }
+        }
+        
+        // Main draw function
+        function drawScope() {
+            // Clear canvas
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            drawGrid();
+            
+            // Calculate actual cutoff frequencies based on spread
+            const logBase = Math.log10(baseFreq);
+            const lpCutoff = Math.pow(10, logBase - spread);
+            const hpCutoff = Math.pow(10, logBase + spread);
+            
+            // Calculate Q values from resonance
+            function resonanceToQ(resValue) {
+                if (resValue <= 0) return 0.707;
+                return 0.707 + (resValue / 100) * (11.2 - 0.707);
+            }
+            
+            // Calculate individual resonances with tilt
+            const lowsResonance = Math.max(0, Math.min(100, resonance - tilt));
+            const highsResonance = Math.max(0, Math.min(100, resonance + tilt));
+            const midsHPResonance = Math.max(0, Math.min(100, resonance - tilt));
+            const midsLPResonance = Math.max(0, Math.min(100, resonance + tilt));
+            
+            // Convert to Q values
+            const lowsQ = resonanceToQ(lowsResonance);
+            const highsQ = resonanceToQ(highsResonance);
+            const midsHPQ = resonanceToQ(midsHPResonance);
+            const midsLPQ = resonanceToQ(midsLPResonance);
+            const bp1Q = resonanceToQ(lowsResonance);
+            const bp2Q = resonanceToQ(highsResonance);
+            
+            if (displayMode === 'crossover') {
+                // Generate crossover filter responses
+                const lpFilterData = [];
+                const hpFilterData = [];
+                const bpFilterData = [];
+                
+                for (let i = 0; i < 300; i++) {
+                    const logMin = Math.log10(20);
+                    const logMax = Math.log10(20000);
+                    const logFreq = logMin + (i / 299) * (logMax - logMin);
+                    const freq = Math.pow(10, logFreq);
+                    
+                    // Lowpass response (6-pole) with resonance
+                    const lpResponseDb = resonantButterworthLP(freq, lpCutoff, 6, lowsQ);
+                    lpFilterData.push({
+                        x: freqToX(freq),
+                        y: dbToY(lpResponseDb)
+                    });
+                    
+                    // Highpass response (6-pole) with resonance + 2-pole damping LP
+                    const hpResponseDb = resonantButterworthHP(freq, hpCutoff, 6, highsQ);
+                    
+                    // Calculate damping filter cutoff with proper tracking
+                    let dampingCutoff;
+                    if (trackMode) {
+                        // Use same calculation as updateDampDisplay for consistency
+                        const freqValue = parseFloat(document.getElementById('param1').value);
+                        const spreadValue = parseFloat(document.getElementById('param2').value);
+                        const dampValue = parseFloat(document.getElementById('param5').value);
+                        
+                        // Add all three parameter values
+                        const totalParam = freqValue + spreadValue + dampValue;
+                        
+                        // Convert to frequency using same log law
+                        const logMin = Math.log10(20);
+                        const logMax = Math.log10(30000);
+                        const logFreq = logMin + (totalParam / 100) * (logMax - logMin);
+                        dampingCutoff = Math.pow(10, logFreq);
+                    } else {
+                        dampingCutoff = damp;
+                    }
+                    
+                    // Cap at 30kHz and 20Hz
+                    dampingCutoff = Math.min(dampingCutoff, 30000);
+                    dampingCutoff = Math.max(dampingCutoff, 20);
+                    
+                    // Apply 2-pole damping filter
+                    const dampingResponseDb = butterworth2PoleLP(freq, dampingCutoff);
+                    const totalHPResponseDb = hpResponseDb + dampingResponseDb;
+                    
+                    hpFilterData.push({
+                        x: freqToX(freq),
+                        y: dbToY(totalHPResponseDb)
+                    });
+                    
+                    // Bandpass response: 4-pole HP + 6-pole LP with individual resonances
+                    const bpHPResponseDb = resonantButterworthHP(freq, lpCutoff, 4, midsHPQ);
+                    const bpLPResponseDb = resonantButterworthLP(freq, hpCutoff, 6, midsLPQ);
+                    const bpResponseDb = bpHPResponseDb + bpLPResponseDb;
+                    
+                    bpFilterData.push({
+                        x: freqToX(freq),
+                        y: dbToY(bpResponseDb)
+                    });
+                }
+                
+                // Draw the filter responses
+                drawWaveform(lpFilterData, '#00ffff', 2);
+                drawWaveform(bpFilterData, '#00ff00', 2);
+                drawWaveform(hpFilterData, '#ff00ff', 2);
+                
+            } else if (displayMode === 'bandpass') {
+                // Generate bandpass filter responses
+                const bp1Data = [];
+                const bp2Data = [];
+                
+                for (let i = 0; i < 300; i++) {
+                    const logMin = Math.log10(20);
+                    const logMax = Math.log10(20000);
+                    const logFreq = logMin + (i / 299) * (logMax - logMin);
+                    const freq = Math.pow(10, logFreq);
+                    
+                    // BP1: centered at lpCutoff with lowsResonance
+                    const bp1ResponseDb = resonantBandpass6Pole(freq, lpCutoff, bp1Q);
+                    bp1Data.push({
+                        x: freqToX(freq),
+                        y: dbToY(bp1ResponseDb)
+                    });
+                    
+                    // BP2: centered at hpCutoff with highsResonance
+                    const bp2ResponseDb = resonantBandpass6Pole(freq, hpCutoff, bp2Q);
+                    bp2Data.push({
+                        x: freqToX(freq),
+                        y: dbToY(bp2ResponseDb)
+                    });
+                }
+                
+                // Draw the bandpass filter responses
+                drawWaveform(bp1Data, '#00ffff', 2);
+                drawWaveform(bp2Data, '#ff00ff', 2);
+            } else if (displayMode === 'phaser') {
+                // Generate phaser responses
+                const phaser1Data = [];
+                const phaser2Data = [];
+                
+                for (let i = 0; i < 300; i++) {
+                    const logMin = Math.log10(20);
+                    const logMax = Math.log10(20000);
+                    const logFreq = logMin + (i / 299) * (logMax - logMin);
+                    const freq = Math.pow(10, logFreq);
+                    
+                    // Phaser 1: centered at lpCutoff with lowsResonance
+                    const phaser1ResponseDb = phaser6Pole(freq, lpCutoff, bp1Q, morph);
+                    phaser1Data.push({
+                        x: freqToX(freq),
+                        y: dbToY(phaser1ResponseDb)
+                    });
+                    
+                    // Phaser 2: centered at hpCutoff with highsResonance
+                    const phaser2ResponseDb = phaser6Pole(freq, hpCutoff, bp2Q, morph);
+                    phaser2Data.push({
+                        x: freqToX(freq),
+                        y: dbToY(phaser2ResponseDb)
+                    });
+                }
+                
+                // Draw the phaser responses
+                drawWaveform(phaser1Data, '#00ffff', 2);
+                drawWaveform(phaser2Data, '#ff00ff', 2);
+            } else if (displayMode === 'morph') {
+                // Generate morph response by blending crossover filter responses
+                const morphData = [];
+                
+                for (let i = 0; i < 300; i++) {
+                    const logMin = Math.log10(20);
+                    const logMax = Math.log10(20000);
+                    const logFreq = logMin + (i / 299) * (logMax - logMin);
+                    const freq = Math.pow(10, logFreq);
+                    
+                    // Calculate all three bands as in crossover mode
+                    // Lowpass response (6-pole) with resonance
+                    const lpResponseDb = resonantButterworthLP(freq, lpCutoff, 6, lowsQ);
+                    
+                    // Highpass response (6-pole) with resonance + 2-pole damping LP
+                    const hpResponseDb = resonantButterworthHP(freq, hpCutoff, 6, highsQ);
+                    
+                    // Calculate damping filter cutoff with proper tracking
+                    let dampingCutoff;
+                    if (trackMode) {
+                        // Use same calculation as updateDampDisplay for consistency
+                        const freqValue = parseFloat(document.getElementById('param1').value);
+                        const spreadValue = parseFloat(document.getElementById('param2').value);
+                        const dampValue = parseFloat(document.getElementById('param5').value);
+                        
+                        // Add all three parameter values
+                        const totalParam = freqValue + spreadValue + dampValue;
+                        
+                        // Convert to frequency using same log law
+                        const logMin = Math.log10(20);
+                        const logMax = Math.log10(30000);
+                        const logFreq = logMin + (totalParam / 100) * (logMax - logMin);
+                        dampingCutoff = Math.pow(10, logFreq);
+                    } else {
+                        dampingCutoff = damp;
+                    }
+                    
+                    // Cap at 30kHz and 20Hz
+                    dampingCutoff = Math.min(dampingCutoff, 30000);
+                    dampingCutoff = Math.max(dampingCutoff, 20);
+                    
+                    // Apply 2-pole damping filter to highs
+                    const dampingResponseDb = butterworth2PoleLP(freq, dampingCutoff);
+                    const totalHPResponseDb = hpResponseDb + dampingResponseDb;
+                    
+                    // Bandpass response: 4-pole HP + 6-pole LP with individual resonances
+                    const bpHPResponseDb = resonantButterworthHP(freq, lpCutoff, 4, midsHPQ);
+                    const bpLPResponseDb = resonantButterworthLP(freq, hpCutoff, 6, midsLPQ);
+                    const bpResponseDb = bpHPResponseDb + bpLPResponseDb;
+                    
+                    // Now blend based on morph value
+                    let morphResponseDb;
+                    
+                    if (morph <= 33) {
+                        // Blend between lows (0) and mids (33)
+                        const blend = morph / 33;
+                        // Convert from dB to linear for proper blending
+                        const lpLinear = Math.pow(10, lpResponseDb / 20);
+                        const bpLinear = Math.pow(10, bpResponseDb / 20);
+                        const morphLinear = lpLinear * (1 - blend) + bpLinear * blend;
+                        morphResponseDb = 20 * Math.log10(morphLinear);
+                    } else if (morph <= 66) {
+                        // Blend between mids (33) and highs (66)
+                        const blend = (morph - 33) / 33;
+                        const bpLinear = Math.pow(10, bpResponseDb / 20);
+                        const hpLinear = Math.pow(10, totalHPResponseDb / 20);
+                        const morphLinear = bpLinear * (1 - blend) + hpLinear * blend;
+                        morphResponseDb = 20 * Math.log10(morphLinear);
+                    } else {
+                        // Blend between highs (66) and lows+highs (100)
+                        const blend = (morph - 66) / 34;
+                        const hpLinear = Math.pow(10, totalHPResponseDb / 20);
+                        const lpLinear = Math.pow(10, lpResponseDb / 20);
+                        // For lows+highs, sum the linear magnitudes
+                        const bothLinear = lpLinear + hpLinear;
+                        const morphLinear = hpLinear * (1 - blend) + bothLinear * blend;
+                        morphResponseDb = 20 * Math.log10(morphLinear);
+                    }
+                    
+                    morphData.push({
+                        x: freqToX(freq),
+                        y: dbToY(morphResponseDb)
+                    });
+                }
+                
+                // Draw the morph response
+                drawWaveform(morphData, '#00ffff', 2);
+            }
+        }
+        
+       // Function to draw legend on canvas
+function drawLegendOnCanvas(context, canvasWidth, canvasHeight, scale = 1) {
+    const legendY = canvasHeight - 60 * scale;
+    const legendHeight = 50 * scale;
+    
+    // Set up text
+    context.font = `${12 * scale}px sans-serif`;
+    context.textAlign = 'left';  // Changed from 'center' to 'left'
+    context.textBaseline = 'middle';
+    
+    // Determine which legend items to show based on mode
+    let legendItems = [];
+    if (displayMode === 'crossover') {
+        legendItems = [
+            { color: '#00ffff', label: 'Lows' },
+            { color: '#00ff00', label: 'Mids' },
+            { color: '#ff00ff', label: 'Highs' }
+        ];
+    } else if (displayMode === 'bandpass') {
+        legendItems = [
+            { color: '#00ffff', label: 'BP1' },
+            { color: '#ff00ff', label: 'BP2' }
+        ];
+    } else if (displayMode === 'phaser') {
+        legendItems = [
+            { color: '#00ffff', label: 'Phaser 1' },
+            { color: '#ff00ff', label: 'Phaser 2' }
+        ];
+    } else if (displayMode === 'morph') {
+        legendItems = [
+            { color: '#00ffff', label: 'Morph' }
+        ];
+    }
+    
+    // Calculate spacing
+    const totalWidth = canvasWidth - 100 * scale;
+    const spacing = totalWidth / (legendItems.length + 1);
+    
+    // Draw each legend item
+    legendItems.forEach((item, index) => {
+        const x = 50 * scale + spacing * (index + 1);
+        const y = legendY + legendHeight / 2;
+        
+        // Draw color box
+        context.fillStyle = item.color;
+        context.fillRect(x - 15 * scale, y - 1.5 * scale, 20 * scale, 3 * scale);
+        
+        // Draw label (now left-aligned, positioned after the color box)
+        context.fillStyle = '#e0e0e0';
+        context.fillText(item.label, x + 10 * scale, y);
+    });
+}
+
+// Function to capture high-res PNG
+function captureGraph() {
+    const scale = 3;
+    const captureCanvas = document.createElement('canvas');
+    const captureCtx = captureCanvas.getContext('2d');
+    
+    // Set dimensions (include space for legend)
+    const baseWidth = canvas.width;
+    const baseHeight = canvas.height + 60; // Add 60px for legend
+    captureCanvas.width = baseWidth * scale;
+    captureCanvas.height = baseHeight * scale;
+    
+    // Save original canvas and context
+    const originalCanvas = canvas;
+    const originalCtx = ctx;
+    const originalMargin = margin;
+    
+    // Temporarily switch to capture canvas
+    canvas = captureCanvas;
+    ctx = captureCtx;
+    margin = margin * scale;
+    
+    // Draw the graph
+    drawScope();
+    
+    // Draw the legend (pass scaled dimensions but scale=1 since canvas is already scaled)
+    drawLegendOnCanvas(ctx, baseWidth * scale, baseHeight * scale, scale);
+    
+    // Restore original canvas and context
+    canvas = originalCanvas;
+    ctx = originalCtx;
+    margin = originalMargin;
+    
+    // Redraw the original canvas to ensure it's correct
+    drawScope();
+    
+    // Convert to blob and download
+    captureCanvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        
+        // Generate filename based on mode and parameters
+        const freq = Math.round(baseFreq);
+        const filename = `crossover-${displayMode}-${freq}hz-${Date.now()}.png`;
+        
+        link.href = url;
+        link.download = filename;
+        link.click();
+        
+        // Clean up
+        URL.revokeObjectURL(url);
+    }, 'image/png');
+}
+
+
+        // Event listeners
+        resizeCanvas();
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            drawScope();
+        });
+        
+        // Capture button
+        document.getElementById('captureButton').addEventListener('click', captureGraph);   
+
+       document.getElementById('infoPrev').addEventListener('click', () => {
+    if (currentInfoIndex > 0) {
+        currentInfoIndex--;
+        updateInfoText();
+    }
+});
+
+document.getElementById('infoNext').addEventListener('click', () => {
+    const currentModeTexts = infoTexts[displayMode];
+    if (currentInfoIndex < currentModeTexts.length - 1) {
+        currentInfoIndex++;
+        updateInfoText();
+    }
+});
+        
+        // Parameter controls
+        document.getElementById('param1').addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            const logMin = Math.log10(20);
+            const logMax = Math.log10(20000);
+            const logFreq = logMin + (value / 100) * (logMax - logMin);
+            baseFreq = Math.pow(10, logFreq);
+            
+            let freqDisplay;
+            if (baseFreq >= 1000) {
+                freqDisplay = (baseFreq / 1000).toFixed(1) + ' kHz';
+            } else {
+                freqDisplay = Math.round(baseFreq) + ' Hz';
+            }
+            document.getElementById('param1Display').textContent = freqDisplay;
+            updateDampDisplay();
+            drawScope();
+        });
+        
+        document.getElementById('param2').addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            const logMin = Math.log10(20);
+            const logMax = Math.log10(20000);
+            const spreadFactor = (value / 100) * (logMax - logMin);
+            spread = spreadFactor;
+            
+            document.getElementById('param2Display').textContent = value.toFixed(1);
+            updateDampDisplay();
+            drawScope();
+        });
+        
+        document.getElementById('param3').addEventListener('input', (e) => {
+            resonance = parseFloat(e.target.value);
+            document.getElementById('param3Display').textContent = resonance;
+            drawScope();
+        });
+        
+        document.getElementById('param4').addEventListener('input', (e) => {
+            tilt = parseFloat(e.target.value);
+            document.getElementById('param4Display').textContent = tilt > 0 ? '+' + tilt : tilt;
+            drawScope();
+        });
+        
+        document.getElementById('param5').addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            const logMin = Math.log10(20);
+            const logMax = Math.log10(30000); // CHANGED: max to 30kHz
+            const logFreq = logMin + (value / 100) * (logMax - logMin);
+            damp = Math.pow(10, logFreq);
+            
+            updateDampDisplay();
+            drawScope();
+        });
+        
+        // Morph parameter
+        document.getElementById('param6').addEventListener('input', (e) => {
+            morph = parseFloat(e.target.value);
+            document.getElementById('param6Display').textContent = morph;
+            drawScope();
+        });
+        
+        // Track switch
+        document.getElementById('trackSwitch').addEventListener('click', () => {
+            trackMode = !trackMode;
+            document.getElementById('trackSwitch').classList.toggle('active');
+            updateDampDisplay();
+            drawScope();
+        });
+        
+        // Mode button
+        document.getElementById('modeButton').addEventListener('click', () => {
+            if (displayMode === 'crossover') {
+                displayMode = 'bandpass';
+                document.querySelectorAll('.crossover-mode').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.bandpass-mode').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.phaser-mode').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.morph-mode').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.bandpass-mode').forEach(el => el.style.display = 'flex');
+                // Hide damp control and track switch in bandpass mode
+                document.getElementById('param5').closest('.control-group').style.display = 'none';
+                document.querySelector('.track-control').style.display = 'none';
+                document.getElementById('morphControl').style.display = 'none';
+                currentInfoIndex = 0;
+updateInfoText();
+            } else if (displayMode === 'bandpass') {
+                displayMode = 'phaser';
+                document.querySelectorAll('.crossover-mode').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.bandpass-mode').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.phaser-mode').forEach(el => el.style.display = 'flex');
+                document.querySelectorAll('.morph-mode').forEach(el => el.style.display = 'none');
+                // Keep damp and track hidden, show morph
+                document.getElementById('param5').closest('.control-group').style.display = 'none';
+                document.querySelector('.track-control').style.display = 'none';
+                document.getElementById('morphControl').style.display = 'flex';
+                currentInfoIndex = 0;
+updateInfoText();
+            } else if (displayMode === 'phaser') {
+                displayMode = 'morph';
+                document.querySelectorAll('.crossover-mode').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.bandpass-mode').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.phaser-mode').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.morph-mode').forEach(el => el.style.display = 'flex');
+                // Show damp, track, and morph controls
+                document.getElementById('param5').closest('.control-group').style.display = 'flex';
+                document.querySelector('.track-control').style.display = 'flex';
+                document.getElementById('morphControl').style.display = 'flex';
+                currentInfoIndex = 0;
+updateInfoText();
+            } else {
+                displayMode = 'crossover';
+                document.querySelectorAll('.crossover-mode').forEach(el => el.style.display = 'flex');
+                document.querySelectorAll('.bandpass-mode').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.phaser-mode').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.morph-mode').forEach(el => el.style.display = 'none');
+                // Show damp control and track switch in crossover mode
+                document.getElementById('param5').closest('.control-group').style.display = 'flex';
+                document.querySelector('.track-control').style.display = 'flex';
+                document.getElementById('morphControl').style.display = 'none';
+                currentInfoIndex = 0;
+updateInfoText();
+            }
+            
+            drawScope();
+        });
+        
+        // Initialize after all functions and event listeners are set up
+        updateInfoText();
+        updateDampDisplay();
+        drawScope();
+    </script>
+</body>
+</html>
