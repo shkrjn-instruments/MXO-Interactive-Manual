@@ -102,27 +102,51 @@
             border: 2px solid #333;
             position: relative;
         }
-.capture-button {
-    position: absolute;
-    top: 30px;
-    left: 30px;
-    background: transparent;
-    border: none;
-    color: #888;
-    font-size: 11px;
-    cursor: pointer;
-    text-decoration: underline;
-    padding: 4px 8px;
-    transition: color 0.2s;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    z-index: 10;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-}
 
-.capture-button:hover {
-    color: #bbb;
-}
+        .capture-button {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            background: transparent;
+            border: none;
+            color: #888;
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 4px 8px;
+            transition: color 0.2s;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            z-index: 10;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .capture-button:hover {
+            color: #bbb;
+        }
+
+        .manual-link {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: transparent;
+            border: none;
+            color: #888;
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 4px 8px;
+            transition: color 0.2s;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            z-index: 10;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .manual-link:hover {
+            color: #bbb;
+        }
+
         #scope {
             display: block;
             width: 100%;
@@ -454,8 +478,9 @@
         </div>
         
         <div class="scope-container">
-    <button class="capture-button" id="captureButton">Capture</button>
-    <canvas id="scope"></canvas>
+            <button class="capture-button" id="captureButton">Capture</button>
+            <a href="https://shkrjn-instruments.github.io/Manuals/mxo%20manual/" class="manual-link" target="_blank" rel="noopener noreferrer">Text Manual</a>
+            <canvas id="scope"></canvas>
         </div>
         
         <div class="legend" id="legend">
